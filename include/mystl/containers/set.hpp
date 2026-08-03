@@ -26,9 +26,18 @@ private:
 public:
     set() = default;
     ~set() = default;
+    set(const set&) = default;
+    set& operator=(const set&) = default;
+    set(set&&) noexcept = default;
+    set& operator=(set&&) noexcept = default;
 
     iterator begin() { return tree_.begin(); }
     iterator end()   { return tree_.end(); }
+
+    const_iterator begin() const { return tree_.begin(); }
+    const_iterator end() const   { return tree_.end(); }
+    const_iterator cbegin() const { return tree_.begin(); }
+    const_iterator cend() const   { return tree_.end(); }
 
     bool empty() const { return tree_.empty(); }
     size_type size() const { return tree_.size(); }

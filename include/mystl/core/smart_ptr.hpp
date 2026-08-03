@@ -50,6 +50,28 @@ public:
     }
 };
 
+template <typename T>
+class unique_ptr<T[]> {
+private:
+    T* ptr_;
+public:
+    explicit unique_ptr(T* p = nullptr) : ptr_(p) {}
+    ~unique_ptr() { delete[] ptr_; } // Note the delete[]
+
+    unique_ptr(const unique_ptr&) = delete;
+    unique_ptr& operator=(const unique_ptr&) = delete;
+    
+    unique_ptr(unique_ptr&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
+    unique_ptr& operator=(unique_ptr&& other) noexcept {
+        if (this != &other) { delete[] ptr_; ptr_ = other.ptr_; other.ptr_ = nullptr; }
+        return *this;
+    }
+    
+    T& operator[](std::size_t i) const { return ptr_[i]; }
+    T* get() const { return ptr_; }
+    void reset(T* p = nullptr) { delete[] ptr_; ptr_ = p; }
+};
+
 template <typename T, typename... Args>
 unique_ptr<T> make_unique(Args&&... args) {
     return unique_ptr<T>(new T(std::forward<Args>(args)...));

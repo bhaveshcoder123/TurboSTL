@@ -62,6 +62,25 @@ struct rb_tree_iterator {
         }
         return *this;
     }
+    self& operator--() {
+        if (node == nullptr) { // decrementing from end()
+            node = root;
+            if (node != nullptr) {
+                while (node->right != nullptr) node = node->right;
+            }
+        } else if (node->left != nullptr) {
+            node = node->left;
+            while (node->right != nullptr) node = node->right;
+        } else {
+            node_ptr p = node->parent;
+            while (p != nullptr && node == p->left) {
+                node = p;
+                p = p->parent;
+            }
+            node = p;
+        }
+        return *this;
+    }
 
     bool operator==(const self& other) const { return node == other.node; }
     bool operator!=(const self& other) const { return node != other.node; }
@@ -242,6 +261,16 @@ private:
         destroy_node(n);
     }
 
+    node_ptr copy_tree(node_ptr n, node_ptr p) {
+        if (n == nullptr) return nullptr;
+        node_ptr new_node = create_node(n->data);
+        new_node->color = n->color;
+        new_node->parent = p;
+        new_node->left = copy_tree(n->left, new_node);
+        new_node->right = copy_tree(n->right, new_node);
+        return new_node;
+    }
+
 public:
     rb_tree() : root_(nullptr), size_(0) {}
 
@@ -377,6 +406,40 @@ public:
         if (y_original_color == rb_color::BLACK) {
             erase_fixup(x, x_parent);
         }
+    }
+
+    rb_tree(const rb_tree& other) : alloc_(other.alloc_), root_(nullptr), size_(0), comp_(other.comp_) {
+        if (other.root_ != nullptr) {
+            root_ = copy_tree(other.root_, nullptr);
+            size_ = other.size_;
+        }
+    }
+    rb_tree& operator=(const rb_tree& other) {
+        if (this != &other) {
+            clear();
+            comp_ = other.comp_;
+            if (other.root_ != nullptr) {
+                root_ = copy_tree(other.root_, nullptr);
+                size_ = other.size_;
+            }
+        }
+        return *this;
+    }
+    rb_tree(rb_tree&& other) noexcept : alloc_(std::move(other.alloc_)), root_(other.root_), size_(other.size_), comp_(std::move(other.comp_)) {
+        other.root_ = nullptr;
+        other.size_ = 0;
+    }
+    rb_tree& operator=(rb_tree&& other) noexcept {
+        if (this != &other) {
+            clear();
+            alloc_ = std::move(other.alloc_);
+            root_ = other.root_;
+            size_ = other.size_;
+            comp_ = std::move(other.comp_);
+            other.root_ = nullptr;
+            other.size_ = 0;
+        }
+        return *this;
     }
 };
 

@@ -136,16 +136,78 @@ public:
         return static_cast<float>(size_) / static_cast<float>(bucket_count_); 
     }
 
-    iterator begin() const {
-        for (size_type i = 0; i < bucket_count_; ++i) {
-            if (buckets_[i] != nullptr) {
-                return iterator(buckets_[i], this, i);
+    hashtable(const hashtable& other) 
+        : bucket_count_(other.bucket_count_), size_(0), max_load_factor_(other.max_load_factor_), 
+          hash_(other.hash_), equals_(other.equals_), node_alloc_(other.node_alloc_), ptr_alloc_(other.ptr_alloc_) {
+        buckets_ = allocate_buckets(bucket_count_);
+        for (size_type i = 0; i < other.bucket_count_; ++i) {
+            node_ptr curr = other.buckets_[i];
+            while (curr != nullptr) {
+                insert(curr->data);
+                curr = curr->next;
             }
+        }
+    }
+
+    hashtable& operator=(const hashtable& other) {
+        if (this != &other) {
+            clear();
+            deallocate_buckets(buckets_, bucket_count_);
+            bucket_count_ = other.bucket_count_;
+            max_load_factor_ = other.max_load_factor_;
+            hash_ = other.hash_;
+            equals_ = other.equals_;
+            buckets_ = allocate_buckets(bucket_count_);
+            for (size_type i = 0; i < other.bucket_count_; ++i) {
+                node_ptr curr = other.buckets_[i];
+                while (curr != nullptr) {
+                    insert(curr->data);
+                    curr = curr->next;
+                }
+            }
+        }
+        return *this;
+    }
+
+    hashtable(hashtable&& other) noexcept 
+        : buckets_(other.buckets_), bucket_count_(other.bucket_count_), size_(other.size_), 
+          max_load_factor_(other.max_load_factor_), hash_(std::move(other.hash_)), equals_(std::move(other.equals_)) {
+        other.buckets_ = nullptr;
+        other.bucket_count_ = 0;
+        other.size_ = 0;
+    }
+
+    hashtable& operator=(hashtable&& other) noexcept {
+        if (this != &other) {
+            clear();
+            deallocate_buckets(buckets_, bucket_count_);
+            buckets_ = other.buckets_;
+            bucket_count_ = other.bucket_count_;
+            size_ = other.size_;
+            max_load_factor_ = other.max_load_factor_;
+            hash_ = std::move(other.hash_);
+            equals_ = std::move(other.equals_);
+            other.buckets_ = nullptr;
+            other.bucket_count_ = 0;
+            other.size_ = 0;
+        }
+        return *this;
+    }
+
+    iterator begin() {
+        for (size_type i = 0; i < bucket_count_; ++i) {
+            if (buckets_[i] != nullptr) return iterator(buckets_[i], this, i);
         }
         return end();
     }
-
-    iterator end() const { return iterator(nullptr, this, bucket_count_); }
+    const_iterator begin() const {
+        for (size_type i = 0; i < bucket_count_; ++i) {
+            if (buckets_[i] != nullptr) return const_iterator(buckets_[i], this, i);
+        }
+        return end();
+    }
+    iterator end() { return iterator(nullptr, this, bucket_count_); }
+    const_iterator end() const { return const_iterator(nullptr, this, bucket_count_); }
 
     void rehash(size_type new_count) {
         if (new_count <= bucket_count_) return;

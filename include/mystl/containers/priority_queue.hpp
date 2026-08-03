@@ -80,13 +80,13 @@ public:
 
     void pop() {
         if (c.empty()) return;
-        
+        if (c.size() == 1) {
+            c.pop_back();
+            return;
+        }
         c[0] = std::move(c[c.size() - 1]);
         c.pop_back();
-        
-        if (!c.empty()) {
-            sift_down(0);
-        }
+        sift_down(0);
     }
 };
 

@@ -26,6 +26,10 @@ public:
 
     unordered_set() : ht_(8) {}
     ~unordered_set() = default;
+    unordered_set(const unordered_set&) = default;
+    unordered_set& operator=(const unordered_set&) = default;
+    unordered_set(unordered_set&&) noexcept = default;
+    unordered_set& operator=(unordered_set&&) noexcept = default;
 
     iterator begin() const { return ht_.begin(); }
     iterator end() const   { return ht_.end(); }

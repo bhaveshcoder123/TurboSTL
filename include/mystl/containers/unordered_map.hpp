@@ -42,6 +42,10 @@ public:
 
     unordered_map() : ht_(8) {}
     ~unordered_map() = default;
+    unordered_map(const unordered_map&) = default;
+    unordered_map& operator=(const unordered_map&) = default;
+    unordered_map(unordered_map&&) noexcept = default;
+    unordered_map& operator=(unordered_map&&) noexcept = default;
 
     iterator begin() { return ht_.begin(); }
     iterator end()   { return ht_.end(); }

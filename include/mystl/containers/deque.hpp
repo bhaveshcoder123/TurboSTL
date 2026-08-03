@@ -59,6 +59,64 @@ public:
         }
     }
 
+    deque(const deque& other) : data_(nullptr), capacity_(0), front_idx_(0), back_idx_(0), size_(0) {
+        if (other.size_ > 0) {
+            for (size_type i = 0; i < other.size_; ++i) {
+                push_back(other.data_[(other.front_idx_ + i) % other.capacity_]);
+            }
+        }
+    }
+
+    deque& operator=(const deque& other) {
+        if (this != &other) {
+            clear();
+            if (data_) alloc_.deallocate(data_, capacity_);
+            data_ = nullptr;
+            capacity_ = 0;
+            front_idx_ = 0;
+            back_idx_ = 0;
+            size_ = 0;
+            
+            if (other.size_ > 0) {
+                for (size_type i = 0; i < other.size_; ++i) {
+                    push_back(other.data_[(other.front_idx_ + i) % other.capacity_]);
+                }
+            }
+        }
+        return *this;
+    }
+
+    deque(deque&& other) noexcept 
+        : alloc_(std::move(other.alloc_)), data_(other.data_), capacity_(other.capacity_), 
+          front_idx_(other.front_idx_), back_idx_(other.back_idx_), size_(other.size_) {
+        other.data_ = nullptr;
+        other.capacity_ = 0;
+        other.front_idx_ = 0;
+        other.back_idx_ = 0;
+        other.size_ = 0;
+    }
+
+    deque& operator=(deque&& other) noexcept {
+        if (this != &other) {
+            clear();
+            if (data_) alloc_.deallocate(data_, capacity_);
+            
+            alloc_ = std::move(other.alloc_);
+            data_ = other.data_;
+            capacity_ = other.capacity_;
+            front_idx_ = other.front_idx_;
+            back_idx_ = other.back_idx_;
+            size_ = other.size_;
+
+            other.data_ = nullptr;
+            other.capacity_ = 0;
+            other.front_idx_ = 0;
+            other.back_idx_ = 0;
+            other.size_ = 0;
+        }
+        return *this;
+    }
+
     size_type size() const { return size_; }
     bool empty() const { return size_ == 0; }
 

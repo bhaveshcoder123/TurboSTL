@@ -6,6 +6,7 @@
 #include <cstddef>   
 #include <utility>   
 #include <stdexcept>
+#include <type_traits>
 
 namespace mystl {
 
@@ -50,7 +51,11 @@ public:
             pointer new_finish = new_start;
 
             for (pointer p = start_; p != finish_; ++p) {
-                alloc_.construct(new_finish, std::move(*p));
+                if constexpr (std::is_nothrow_move_constructible<T>::value) {
+                    alloc_.construct(new_finish, std::move(*p));
+                } else {
+                    alloc_.construct(new_finish, *p);
+                }
                 alloc_.destroy(p); 
                 ++new_finish;
             }
@@ -94,6 +99,43 @@ public:
     
     const_reference operator[](size_type pos) const { 
         return start_[pos]; 
+    }
+
+    vector(const vector& other) : start_(nullptr), finish_(nullptr), end_of_storage_(nullptr) {
+        reserve(other.size());
+        for (pointer p = other.start_; p != other.finish_; ++p) {
+            push_back(*p);
+        }
+    }
+
+    vector& operator=(const vector& other) {
+        if (this != &other) {
+            clear();
+            reserve(other.size());
+            for (pointer p = other.start_; p != other.finish_; ++p) {
+                push_back(*p);
+            }
+        }
+        return *this;
+    }
+
+    vector(vector&& other) noexcept 
+        : alloc_(std::move(other.alloc_)), start_(other.start_), 
+          finish_(other.finish_), end_of_storage_(other.end_of_storage_) {
+        other.start_ = other.finish_ = other.end_of_storage_ = nullptr;
+    }
+
+    vector& operator=(vector&& other) noexcept {
+        if (this != &other) {
+            clear();
+            if (start_) alloc_.deallocate(start_, capacity());
+            alloc_ = std::move(other.alloc_);
+            start_ = other.start_;
+            finish_ = other.finish_;
+            end_of_storage_ = other.end_of_storage_;
+            other.start_ = other.finish_ = other.end_of_storage_ = nullptr;
+        }
+        return *this;
     }
 };
 

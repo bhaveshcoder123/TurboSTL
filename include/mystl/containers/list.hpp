@@ -115,6 +115,11 @@ public:
     iterator begin() { return iterator(dummy_->next); }
     iterator end()   { return iterator(dummy_); }
 
+    const_iterator begin() const { return const_iterator(dummy_->next); }
+    const_iterator end() const   { return const_iterator(dummy_); }
+    const_iterator cbegin() const { return const_iterator(dummy_->next); }
+    const_iterator cend() const   { return const_iterator(dummy_); }
+
     size_type size() const { return size_; }
     bool empty() const     { return size_ == 0; }
 
@@ -134,6 +139,8 @@ public:
 
     iterator erase(iterator pos) {
         node_ptr current = pos.node;
+        if (current == dummy_) return pos; 
+
         node_ptr next_node = current->next;
         node_ptr prev_node = current->prev;
 
@@ -156,6 +163,38 @@ public:
         while (!empty()) {
             pop_back();
         }
+    }
+
+    list(const list& other) : list() {
+        for (auto& item : other) push_back(item);
+    }
+    list& operator=(const list& other) {
+        if (this != &other) {
+            clear();
+            for (auto& item : other) push_back(item);
+        }
+        return *this;
+    }
+    list(list&& other) noexcept : alloc_(std::move(other.alloc_)), dummy_(other.dummy_), size_(other.size_) {
+        other.dummy_ = alloc_.allocate(1); 
+        other.dummy_->next = other.dummy_;
+        other.dummy_->prev = other.dummy_;
+        other.size_ = 0;
+    }
+    list& operator=(list&& other) noexcept {
+        if (this != &other) {
+            clear();
+            alloc_.deallocate(dummy_, 1);
+            alloc_ = std::move(other.alloc_);
+            dummy_ = other.dummy_;
+            size_ = other.size_;
+            
+            other.dummy_ = alloc_.allocate(1);
+            other.dummy_->next = other.dummy_;
+            other.dummy_->prev = other.dummy_;
+            other.size_ = 0;
+        }
+        return *this;
     }
 };
 

@@ -36,6 +36,10 @@ private:
 public:
     map() = default;
     ~map() = default;
+    map(const map&) = default;
+    map& operator=(const map&) = default;
+    map(map&&) noexcept = default;
+    map& operator=(map&&) noexcept = default;
 
     iterator begin() { return tree_.begin(); }
     iterator end()   { return tree_.end(); }
